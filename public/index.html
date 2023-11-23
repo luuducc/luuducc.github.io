@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <title>Chat realtime 1-1</title>
+</head>
+<body>
+  <h1 style="color: lightcoral;">Tran Bach Luu Duc - 20200180</h1>
+  <h1 class="text">Hello, we've created a name for you: <span id="yourname"></span></h1>
+  <form id="form" action="">
+    <laber for="friend" class="text">Choose your friend</laber>
+    <select name="friend" id="friend">
+      <!-- friends are here -->
+    </select>
+    <br>
+    <input id="input" autocomplete="off"/><button>Send</button>
+  </form>
+  <textarea id="chatting" cols="100" rows="20"></textarea>
+  <!-- load socket.io script from node modules -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io()
+
+    const form = document.getElementById('form')
+    const input = document.getElementById('input')
+    const name = document.getElementById('yourname')
+    const friendList = document.getElementById('friend')
+    const chatting = document.getElementById('chatting')
+    let realName = null
+  
+    // get a list of connected friends
+    socket.on('returnName', (list, username) => {
+      // show a created name to client
+      if(!name.innerText) {
+        name.innerText = username
+        realName = username
+      }
+      // empty the list
+      friendList.innerHTML = ""
+
+      // update the list
+      list.forEach(element => {
+        console.log(Object.keys(element)[0])
+        if(Object.keys(element)[0] !== realName) {
+          const newFriend = document.createElement('option')
+          newFriend.text = Object.keys(element)[0]
+          friendList.add(newFriend)
+        }        
+      })
+    })
+
+    //send msg to server
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault()
+      if(input.value) {
+        socket.emit('chat', input.value, friendList.value)
+        input.value = ""
+      }
+    })
+
+    //receive msg from server
+    socket.on("sendMsg", (from, msg, to)=>{
+      
+      chatting.value += `${from}: ${msg}`
+      if(to) {
+        chatting.value += ` (to ${to})\n`
+      } else {
+        chatting.value += `\n`
+      }
+      window.scrollTo(0, document.body.scrollHeight)
+    })
+  </script>
+</body>
+</html>
